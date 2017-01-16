@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #encoding=utf8
 
+__author__="Simon Shi"
+
 import sys
 import os
 import re
@@ -21,6 +23,29 @@ def get_functions_from_unwind(elf_file,sort = True):
     #print functions    
     return functions        
 
+
+def addr_to_func(elf_file,target_addr):
+    
+    unwind_info = get_functions_from_unwind(elf_file) 
+
+    last_one = [0,"unknown"]
+    found = False
+    for (addr,name) in unwind_info:
+        if target_addr == addr:
+            return (name,0) 
+            found = True
+            break
+        elif target_addr > addr:
+            last_one = (addr, name)
+            continue
+        elif target_addr < addr:
+            return (last_one[1],addr - last_one[0])
+            found = True
+            break
+    if not found:
+        return ("unknown",-1)
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print "%s ELF_WITH_ARM_UNWIND ADDR_HEX" % sys.argv[0]
@@ -32,23 +57,7 @@ if __name__ == '__main__':
         print "bad address: %s" % sys.argv[2]
         exit(2)
 
-    unwind_info = get_functions_from_unwind(sys.argv[1]) 
+    print "%s:+0x%x" % addr_to_func(sys.argv[1],target_addr)
 
-    last_one = [0,"unknown"]
-    found = False
-    for (addr,name) in unwind_info:
-        if target_addr == addr:
-            print name 
-            found = True
-            break
-        elif target_addr > addr:
-            last_one = (addr, name)
-            continue
-        elif target_addr < addr:
-            print last_one[1]
-            found = True
-            break
-    if not found:
-        print "unknown"
             
 
